@@ -1,369 +1,435 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  Database, 
-  Users, 
-  TrendingUp, 
-  Cpu, 
-  Droplets, 
-  Flame, 
-  Globe, 
-  ChevronRight, 
-  LayoutDashboard,
-  Clock,
-  HardHat,
-  AlertTriangle,
-  CheckCircle2,
-  Image as ImageIcon,
-  Loader2
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 7: Strategic Storage Capacity | Executive Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .glow-text {
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        .gradient-border:hover {
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow {
+            animation: pulse-soft 3s infinite;
+        }
+        .loader {
+            border: 2px solid #334155;
+            border-top: 2px solid #f59e0b;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 overflow-x-hidden">
 
-const App = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [generatedImages, setGeneratedImages] = useState({});
-  const [generating, setGenerating] = useState(null);
-  const [error, setError] = useState(null);
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-br from-amber-400 to-orange-600 p-2 rounded-lg shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-950"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <span class="text-xl font-bold tracking-tight uppercase">Strategic Storage <span class="text-amber-500 underline decoration-2 underline-offset-4">P7</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+                <a href="#overview" class="hover:text-amber-500 transition-colors">Overview</a>
+                <a href="#metrics" class="hover:text-amber-500 transition-colors">Metrics</a>
+                <a href="#timeline" class="hover:text-amber-500 transition-colors">Timeline</a>
+                <button class="bg-amber-500 text-slate-950 px-6 py-2 rounded-full hover:bg-amber-400 hover:scale-105 transition-all font-bold shadow-lg shadow-amber-500/20">Executive Brief</button>
+            </div>
+        </div>
+    </nav>
 
-  const apiKey = ""; // Provided at runtime
-
-  const imagePrompts = [
-    {
-      id: 'hero',
-      label: 'Project Hero',
-      description: 'LPG Storage Spheres Visualization',
-      prompt: "A hyper-realistic, wide-angle cinematic shot of gleaming white industrial LPG storage spheres at an Abidjan port terminal. Bright morning sun, clear blue sky, green landscaping around the perimeter, drone perspective. 8k, architectural visualization, clean corporate aesthetic."
-    },
-    {
-      id: 'tech',
-      label: 'Tech Integration',
-      description: 'Digital Monitoring System',
-      prompt: "Macro shot of a high-tech industrial monitoring tablet held by a professional Ivorian engineer in a clean white hardhat. The screen shows a glowing holographic 3D model of a storage depot. Soft bokeh background, professional lighting."
-    },
-    {
-      id: 'hub',
-      label: 'The Hub Concept',
-      description: 'Regional Logistics Map',
-      prompt: "Futuristic aerial map view of Côte d'Ivoire showing glowing energy pipelines connecting the Baleine offshore field to modern coastal storage depots. Minimalist map design, navy blue and gold color scheme, data visualization style."
-    }
-  ];
-
-  const generateImage = async (imageObj) => {
-    setGenerating(imageObj.id);
-    setError(null);
-
-    const payload = {
-      contents: [{
-        parts: [{ text: imageObj.prompt }]
-      }],
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE']
-      }
-    };
-
-    let retries = 0;
-    const maxRetries = 5;
-
-    const attempt = async () => {
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) throw new Error('API request failed');
-
-        const result = await response.json();
-        const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+    <main class="pt-32 pb-20 max-w-7xl mx-auto px-6">
         
-        if (base64) {
-          setGeneratedImages(prev => ({ ...prev, [imageObj.id]: `data:image/png;base64,${base64}` }));
-          setGenerating(null);
-        } else {
-          throw new Error('No image data returned');
-        }
-      } catch (err) {
-        if (retries < maxRetries) {
-          retries++;
-          const delay = Math.pow(2, retries) * 500;
-          setTimeout(attempt, delay);
-        } else {
-          setError(`Failed to generate ${imageObj.label}. Please try again later.`);
-          setGenerating(null);
-        }
-      }
-    };
-
-    attempt();
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-amber-400 to-orange-600 p-2 rounded-lg">
-              <Shield className="w-6 h-6 text-slate-950" />
-            </div>
-            <span className="text-xl font-bold tracking-tight uppercase">Strategic Storage <span className="text-amber-500 underline decoration-2 underline-offset-4">P7</span></span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <button onClick={() => setActiveTab('overview')} className={`hover:text-amber-500 transition-colors ${activeTab === 'overview' ? 'text-amber-500' : ''}`}>Overview</button>
-            <button onClick={() => setActiveTab('metrics')} className={`hover:text-amber-500 transition-colors ${activeTab === 'metrics' ? 'text-amber-500' : ''}`}>Metrics</button>
-            <button onClick={() => setActiveTab('timeline')} className={`hover:text-amber-500 transition-colors ${activeTab === 'timeline' ? 'text-amber-500' : ''}`}>Timeline</button>
-            <button className="bg-amber-500 text-slate-950 px-5 py-2 rounded-full hover:bg-amber-400 transition-all font-bold">Invest Now</button>
-          </div>
-        </div>
-      </nav>
-
-      <main className="pt-32 pb-20 max-w-7xl mx-auto px-6">
-        {/* Section 1: Hero */}
-        <section className="mb-24 text-center md:text-left">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-500 text-xs font-bold uppercase tracking-widest mb-6">
-                <Globe className="w-3 h-3" /> National Energy Security
-              </div>
-              <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
-                Securing the <br />
-                <span className="bg-gradient-to-r from-white to-slate-500 bg-clip-text text-transparent italic">Midstream</span>
-              </h1>
-              <p className="text-xl text-slate-400 mb-8 max-w-lg leading-relaxed">
-                A $156M roadmap transforming Côte d'Ivoire into West Africa’s most resilient energy hub through modernization, expansion, and digital twin technology.
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <div className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-                  <Database className="text-amber-500 w-8 h-8" />
-                  <div>
-                    <div className="text-2xl font-bold">122k m³</div>
-                    <div className="text-xs text-slate-500 uppercase tracking-tighter">LPG Storage Capacity</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-                  <Clock className="text-amber-500 w-8 h-8" />
-                  <div>
-                    <div className="text-2xl font-bold">60 Days</div>
-                    <div className="text-xs text-slate-500 uppercase tracking-tighter">Strategic Reserve</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-              <div className="relative aspect-video bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-center overflow-hidden">
-                {generatedImages.hero ? (
-                  <img src={generatedImages.hero} alt="Project Hero" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-center p-8">
-                    {generating === 'hero' ? (
-                      <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-12 h-12 text-amber-500 animate-spin" />
-                        <p className="text-slate-500 text-sm">Visualizing 8k Infrastructure...</p>
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => generateImage(imagePrompts[0])}
-                        className="flex flex-col items-center gap-4 group/btn"
-                      >
-                        <ImageIcon className="w-12 h-12 text-slate-700 group-hover/btn:text-amber-500 transition-colors" />
-                        <span className="text-slate-500 text-sm font-medium">Click to Generate Executive Visual</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: Asset Intelligence (Dashboard) */}
-        <section className="mb-24 py-16 border-y border-slate-800/50">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl font-bold mb-2 flex items-center gap-3">
-                <LayoutDashboard className="text-amber-500" /> Asset Intelligence
-              </h2>
-              <p className="text-slate-500">Real-time national fuel security metrics and expansion targets.</p>
-            </div>
-            <div className="hidden md:block px-4 py-2 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">
-              System Active: Digital Twin Online
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-colors group">
-              <div className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Total Project Cost</div>
-              <div className="text-4xl font-extrabold text-white mb-4">$156.0M <span className="text-sm font-normal text-slate-500">USD</span></div>
-              <div className="text-xs text-slate-500 leading-relaxed">
-                Recalibrated for 2025–2026 Discovery Scale. Includes 15.4% PPI adjustment and HAZMAT specialized steel requirements.
-              </div>
-              <div className="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
-                <span className="text-xs font-semibold text-amber-500">View Budget Breakdown</span>
-                <ChevronRight className="w-4 h-4 text-amber-500 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-
-            <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-colors group">
-              <div className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Labor & Opportunity</div>
-              <div className="text-4xl font-extrabold text-white mb-4">7,600 <span className="text-sm font-normal text-slate-500">Jobs</span></div>
-              <div className="text-xs text-slate-500 leading-relaxed">
-                Direct, indirect, and induced employment. 21% budget allocation ($32.7M) for specialized welding, safety engineering, and automation.
-              </div>
-              <div className="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center text-slate-500">
-                <div className="flex gap-1">
-                  <HardHat className="w-3 h-3" />
-                  <HardHat className="w-3 h-3" />
-                  <HardHat className="w-3 h-3 text-amber-500" />
-                </div>
-                <span className="text-xs font-semibold text-amber-500">Recruitment Portal</span>
-              </div>
-            </div>
-
-            <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/50 transition-colors group">
-              <div className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-2">Refined Reserves</div>
-              <div className="text-4xl font-extrabold text-white mb-4">60 Days <span className="text-sm font-normal text-slate-500">Buffer</span></div>
-              <div className="text-xs text-slate-500 leading-relaxed">
-                Strengthening national resilience against global supply chain shocks. Supporting the Baleine and Calao production ramp-up.
-              </div>
-              <div className="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
-                <TrendingUp className="w-5 h-5 text-amber-500" />
-                <span className="text-xs font-semibold text-amber-500">Resilience Analytics</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 3: Implementation Timeline */}
-        <section className="mb-24">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Phase-Based Evolution</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto italic">
-              "Transitioning from maintenance to a nationwide infrastructure network."
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { phase: "Phase I", title: "Safety Audits", time: "Months 1–6", desc: "Geological and safety site audits for new reservoirs in Abidjan and Bouaké.", icon: Shield },
-              { phase: "Phase II", title: "EPC Execution", time: "Months 7–18", desc: "Engineering, Procurement, and Construction for high-spec LPG spheres.", icon: Cpu },
-              { phase: "Phase III", title: "Digital Integration", time: "Months 19–24", desc: "Automated inventory management (Digital Twin) system launch.", icon: TrendingUp },
-              { phase: "Phase IV", title: "Global ESG Cert", time: "Year 3+", desc: "Final certification for international safety and ESG compliance standards.", icon: CheckCircle2 }
-            ].map((p, i) => (
-              <div key={i} className="relative p-6 bg-slate-900/40 rounded-xl border border-slate-800 overflow-hidden group">
-                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-30 transition-opacity">
-                  <p.icon className="w-16 h-16" />
-                </div>
-                <div className="text-amber-500 font-bold text-xs mb-1 uppercase tracking-widest">{p.phase}</div>
-                <div className="text-slate-500 text-xs mb-4">{p.time}</div>
-                <h3 className="text-xl font-bold mb-3">{p.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{p.desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 4: ESG & Resilience */}
-        <section className="bg-slate-900 rounded-3xl p-8 md:p-12 border border-slate-800 relative overflow-hidden">
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl"></div>
-          
-          <div className="grid md:grid-cols-2 gap-12 relative z-10 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-                <Globe className="text-amber-500" /> Sustainable Operations
-              </h2>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="bg-slate-800 p-3 rounded-lg h-fit">
-                    <Droplets className="text-amber-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg">Climate Resilience</h4>
-                    <p className="text-slate-400 text-sm">New storage units are costed with "climate-proofing" premiums to account for rising lagoon levels in Abidjan.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="bg-slate-800 p-3 rounded-lg h-fit">
-                    <Flame className="text-amber-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg">Clean Fuel Domestic Expansion</h4>
-                    <p className="text-slate-400 text-sm">122,000 m³ LPG capacity focused on replacing biomass for clean cooking fuel across the nation.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="bg-slate-800 p-3 rounded-lg h-fit">
-                    <AlertTriangle className="text-amber-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg">Fire Suppression Excellence</h4>
-                    <p className="text-slate-400 text-sm">High-spec automated suppression systems integrated into every modernization module.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {imagePrompts.slice(1).map((img) => (
-                <div key={img.id} className="aspect-square bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden flex flex-col items-center justify-center p-4 text-center">
-                  {generatedImages[img.id] ? (
-                    <img src={generatedImages[img.id]} alt={img.label} className="w-full h-full object-cover rounded-xl" />
-                  ) : (
-                    <div className="h-full flex flex-col justify-between py-4">
-                      <div className="flex justify-center">
-                        {generating === img.id ? (
-                          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-                        ) : (
-                          <ImageIcon className="w-8 h-8 text-slate-600" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-slate-300 mb-1">{img.label}</div>
-                        <p className="text-[10px] text-slate-500 mb-4 px-2">{img.description}</p>
-                        <button 
-                          onClick={() => generateImage(img)}
-                          disabled={generating === img.id}
-                          className="bg-slate-700 hover:bg-amber-500 hover:text-slate-950 transition-all text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-tighter"
-                        >
-                          {generating === img.id ? 'Thinking...' : 'Generate'}
-                        </button>
-                      </div>
+        <!-- Hero Section -->
+        <section id="overview" class="mb-32">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="space-y-8">
+                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-amber-500 text-xs font-bold uppercase tracking-widest">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        National Energy Security Roadmap
                     </div>
-                  )}
+                    <h1 class="text-5xl md:text-7xl font-extrabold leading-tight glow-text">
+                        Securing the <br />
+                        <span class="bg-gradient-to-r from-white via-slate-300 to-slate-500 bg-clip-text text-transparent italic">Midstream</span>
+                    </h1>
+                    <p class="text-xl text-slate-400 max-w-lg leading-relaxed">
+                        A $156M strategic modernization of the hydrocarbon storage network to ensure national resilience and support the Baleine/Calao field expansion.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex items-center gap-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800 group hover:border-amber-500/50 transition-all">
+                            <div class="p-3 bg-amber-500/10 rounded-xl text-amber-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black">122k m³</div>
+                                <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">LPG Capacity Target</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800 group hover:border-amber-500/50 transition-all">
+                            <div class="p-3 bg-amber-500/10 rounded-xl text-amber-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <div>
+                                <div class="text-3xl font-black">60 Days</div>
+                                <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Strategic Reserves</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              ))}
+
+                <!-- Interactive Hero Image Area -->
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                    <div id="hero-container" class="relative aspect-[4/3] bg-slate-900 rounded-3xl border border-slate-800 flex flex-col items-center justify-center overflow-hidden">
+                        <div id="hero-placeholder" class="text-center p-12">
+                            <div class="mb-6 flex justify-center">
+                                <div class="p-5 bg-slate-800 rounded-full text-slate-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                </div>
+                            </div>
+                            <h3 class="text-slate-300 font-bold mb-2">Architectural Visualization</h3>
+                            <p class="text-slate-500 text-sm mb-8">Generate 8k cinematic shot of LPG spheres</p>
+                            <button onclick="generateImage('hero')" class="px-8 py-3 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 transition-all rounded-full font-bold uppercase tracking-widest text-xs">
+                                Initialize Generation
+                            </button>
+                        </div>
+                        <div id="hero-loading" class="hidden flex-col items-center gap-4">
+                            <div class="loader"></div>
+                            <p class="text-amber-500 text-sm font-medium animate-pulse">Rendering Infrastructure...</p>
+                        </div>
+                        <img id="hero-image" src="" alt="LPG Infrastructure" class="hidden w-full h-full object-cover">
+                    </div>
+                </div>
             </div>
-          </div>
         </section>
 
-        {error && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-2xl z-[100] flex items-center gap-3 font-medium border-2 border-white/20 backdrop-blur-md">
-            <AlertTriangle className="w-5 h-5" />
-            {error}
-            <button onClick={() => setError(null)} className="ml-4 opacity-50 hover:opacity-100 font-black">×</button>
-          </div>
-        )}
-      </main>
+        <!-- Metrics Dashboard -->
+        <section id="metrics" class="mb-32 py-20 border-y border-slate-900">
+            <div class="flex flex-col md:flex-row items-end justify-between mb-16 gap-4">
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-black flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-500"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                        Asset Intelligence
+                    </h2>
+                    <p class="text-slate-500">Consolidated financial and operational performance metrics.</p>
+                </div>
+                <div class="px-4 py-2 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse-slow">
+                    Digital Twin Interface Active
+                </div>
+            </div>
 
-      <footer className="border-t border-slate-900 bg-slate-950/50 py-12 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-amber-500" />
-            <span className="text-sm font-bold tracking-widest uppercase">Project 7 Dashboard &copy; 2025</span>
-          </div>
-          <div className="flex gap-8 text-xs text-slate-500 font-medium uppercase tracking-widest">
-            <a href="#" className="hover:text-amber-500">Investor Relations</a>
-            <a href="#" className="hover:text-amber-500">Legal Disclosure</a>
-            <a href="#" className="hover:text-amber-500">Environment Impact</a>
-          </div>
-          <div className="text-xs text-slate-600">
-            Secure Terminal Portal • Auth ID: ABJ-ST-7700
-          </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="glass-card p-8 rounded-3xl gradient-border border border-slate-800 transition-all group">
+                    <div class="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Capital Expenditure</div>
+                    <div class="text-5xl font-black mb-4">$156.0<span class="text-xl font-normal text-slate-600 ml-1">M</span></div>
+                    <p class="text-sm text-slate-400 leading-relaxed">Recalibrated budget for discovered field scale. 15.4% PPI adjustment included for HAZMAT steel compliance.</p>
+                    <div class="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between group-hover:text-amber-500 transition-colors">
+                        <span class="text-xs font-bold uppercase tracking-wider">Financial Audit</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-card p-8 rounded-3xl gradient-border border border-slate-800 transition-all group">
+                    <div class="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Economic Impact</div>
+                    <div class="text-5xl font-black mb-4">7,600<span class="text-xl font-normal text-slate-600 ml-1">Jobs</span></div>
+                    <p class="text-sm text-slate-400 leading-relaxed">Direct & indirect careers in safety, automation, and logistics. $32.7M built-in labor budget for specialists.</p>
+                    <div class="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between group-hover:text-amber-500 transition-colors">
+                        <span class="text-xs font-bold uppercase tracking-wider">Labor Roadmap</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-card p-8 rounded-3xl gradient-border border border-slate-800 transition-all group">
+                    <div class="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Market Resilience</div>
+                    <div class="text-5xl font-black mb-4">60<span class="text-xl font-normal text-slate-600 ml-1">Days</span></div>
+                    <p class="text-sm text-slate-400 leading-relaxed">Ensuring regional stability. Strengthening Côte d’Ivoire’s role as the hub for Mali and Burkina Faso.</p>
+                    <div class="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between group-hover:text-amber-500 transition-colors">
+                        <span class="text-xs font-bold uppercase tracking-wider">Strategic Reserve</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transform group-hover:translate-x-1 transition-transform"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline -->
+        <section id="timeline" class="mb-32">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl font-black mb-4 uppercase tracking-tight">Implementation Lifecycle</h2>
+                <div class="w-24 h-1 bg-amber-500 mx-auto rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Phase 1 -->
+                <div class="relative p-8 bg-slate-900/40 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors group">
+                    <div class="text-amber-500 font-black text-xs mb-2 uppercase tracking-[0.2em]">Phase I</div>
+                    <div class="text-slate-500 text-[10px] font-bold mb-6">Months 1–6</div>
+                    <h3 class="text-xl font-bold mb-4">Safety Audits</h3>
+                    <p class="text-sm text-slate-400">Comprehensive geological and safety site audits for new reservoirs across Abidjan & Bouaké.</p>
+                </div>
+                <!-- Phase 2 -->
+                <div class="relative p-8 bg-slate-900/40 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors group">
+                    <div class="text-amber-500 font-black text-xs mb-2 uppercase tracking-[0.2em]">Phase II</div>
+                    <div class="text-slate-500 text-[10px] font-bold mb-6">Months 7–18</div>
+                    <h3 class="text-xl font-bold mb-4">EPC Execution</h3>
+                    <p class="text-sm text-slate-400">Engineering, procurement, and construction of specialized LPG spheres with automated suppression.</p>
+                </div>
+                <!-- Phase 3 -->
+                <div class="relative p-8 bg-slate-900/40 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors group">
+                    <div class="text-amber-500 font-black text-xs mb-2 uppercase tracking-[0.2em]">Phase III</div>
+                    <div class="text-slate-500 text-[10px] font-bold mb-6">Months 19–24</div>
+                    <h3 class="text-xl font-bold mb-4">Digital Sync</h3>
+                    <p class="text-sm text-slate-400">Full integration of the Digital Twin monitoring system for real-time inventory visibility.</p>
+                </div>
+                <!-- Phase 4 -->
+                <div class="relative p-8 bg-slate-900/40 rounded-3xl border border-slate-800 hover:bg-slate-900 transition-colors group">
+                    <div class="text-amber-500 font-black text-xs mb-2 uppercase tracking-[0.2em]">Phase IV</div>
+                    <div class="text-slate-500 text-[10px] font-bold mb-6">Year 3+</div>
+                    <h3 class="text-xl font-bold mb-4">ESG Certification</h3>
+                    <p class="text-sm text-slate-400">Achieving international certification for safety, environmental, and governance benchmarks.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESG Section with Interactive Visualizer -->
+        <section class="relative rounded-[3rem] p-12 lg:p-20 overflow-hidden bg-slate-900 border border-slate-800">
+            <div class="absolute -top-40 -right-40 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[100px]"></div>
+            
+            <div class="grid lg:grid-cols-2 gap-20 items-center relative z-10">
+                <div class="space-y-12">
+                    <div>
+                        <h2 class="text-4xl font-black mb-4">Environmental & <br /><span class="text-amber-500">Social Resilience</span></h2>
+                        <p class="text-slate-400 leading-relaxed italic border-l-2 border-amber-500/30 pl-6">
+                            "Integrating climate-proofing premiums to protect the lagoon infrastructure against rising coastal levels."
+                        </p>
+                    </div>
+
+                    <div class="space-y-8">
+                        <div class="flex gap-6">
+                            <div class="bg-slate-800 p-4 rounded-2xl h-fit text-amber-500 shadow-xl shadow-black/50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold mb-2">Climate Proofing</h4>
+                                <p class="text-sm text-slate-400">Enhanced engineering standards for sea-level rise and extreme weather events in Abidjan port zones.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-6">
+                            <div class="bg-slate-800 p-4 rounded-2xl h-fit text-amber-500 shadow-xl shadow-black/50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.256 1.1-3.174A3 3 0 0 0 8.5 14.5z"/></svg>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold mb-2">Clean Energy Access</h4>
+                                <p class="text-sm text-slate-400">LPG infrastructure aimed at displacing biomass cooking, reducing deforestation across West Africa.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Generation Grid -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div id="tech-card" class="aspect-square bg-slate-800/50 rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col items-center justify-center p-6 text-center group cursor-pointer" onclick="generateImage('tech')">
+                        <div id="tech-placeholder" class="space-y-4">
+                            <div class="flex justify-center text-slate-600 group-hover:text-amber-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                            </div>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Digital Twin View</div>
+                            <button class="text-[10px] bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full uppercase tracking-widest font-black">Generate</button>
+                        </div>
+                        <div id="tech-loading" class="hidden flex-col items-center gap-2">
+                            <div class="loader"></div>
+                            <span class="text-[10px] text-amber-500 font-bold">Initializing AI...</span>
+                        </div>
+                        <img id="tech-image" src="" class="hidden w-full h-full object-cover">
+                    </div>
+
+                    <div id="hub-card" class="aspect-square bg-slate-800/50 rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col items-center justify-center p-6 text-center group cursor-pointer" onclick="generateImage('hub')">
+                        <div id="hub-placeholder" class="space-y-4">
+                            <div class="flex justify-center text-slate-600 group-hover:text-amber-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                            </div>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-tighter">Logistics Map</div>
+                            <button class="text-[10px] bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full uppercase tracking-widest font-black">Generate</button>
+                        </div>
+                        <div id="hub-loading" class="hidden flex-col items-center gap-2">
+                            <div class="loader"></div>
+                            <span class="text-[10px] text-amber-500 font-bold">Visualizing...</span>
+                        </div>
+                        <img id="hub-image" src="" class="hidden w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Message Box (Instead of alert) -->
+        <div id="message-box" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] transform translate-y-20 opacity-0 transition-all duration-500 pointer-events-none">
+            <div class="bg-slate-900 border-2 border-amber-500 text-amber-500 px-8 py-4 rounded-full shadow-2xl font-bold flex items-center gap-3">
+                <svg id="msg-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span id="msg-text">Success</span>
+            </div>
         </div>
-      </footer>
-    </div>
-  );
-};
 
-export default App;
+    </main>
+
+    <footer class="bg-slate-950 py-20 border-t border-slate-900">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
+            <div class="col-span-2 space-y-6">
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-500 p-1.5 rounded-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-slate-950"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <span class="font-black uppercase tracking-widest text-lg">Project 7</span>
+                </div>
+                <p class="text-slate-500 text-sm max-w-sm">A strategic energy pillar initiative of the 2026-2030 PND Objective, securing West African stability through modernized hydrocarbon infrastructure.</p>
+            </div>
+            <div>
+                <h5 class="font-bold text-xs uppercase tracking-[0.2em] text-amber-500 mb-6">Pillars</h5>
+                <ul class="text-sm text-slate-500 space-y-4 font-medium">
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Energy Hub</a></li>
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Strategic Reserves</a></li>
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Clean Cooking</a></li>
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Digital Twin</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-bold text-xs uppercase tracking-[0.2em] text-amber-500 mb-6">Connect</h5>
+                <ul class="text-sm text-slate-500 space-y-4 font-medium">
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Investor Portal</a></li>
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Contact EPC Team</a></li>
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">Career Openings</a></li>
+                    <li><a href="#" class="hover:text-slate-100 transition-colors">ESG Reporting</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 mt-20 pt-8 border-t border-slate-900/50 flex flex-col md:flex-row justify-between items-center text-[10px] text-slate-700 font-bold uppercase tracking-[0.3em] gap-4">
+            <span>&copy; 2025 National Energy Infrastructure Agency</span>
+            <div class="flex gap-8">
+                <span>Abidjan-Terminal: 7700-01</span>
+                <span>SEC-ALPHA-9</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const apiKey = ""; // Global API Key for execution environment
+
+        const imagePrompts = {
+            'hero': "A hyper-realistic, wide-angle cinematic shot of gleaming white industrial LPG storage spheres at an Abidjan port terminal. Bright morning sun, clear blue sky, green landscaping around the perimeter, drone perspective. 8k, architectural visualization, clean corporate aesthetic.",
+            'tech': "Macro shot of a high-tech industrial monitoring tablet held by a professional Ivorian engineer in a clean white hardhat. The screen shows a glowing holographic 3D model of a storage depot. Soft bokeh background, professional lighting.",
+            'hub': "Futuristic aerial map view of Côte d'Ivoire showing glowing energy pipelines connecting the Baleine offshore field to modern coastal storage depots. Minimalist map design, navy blue and gold color scheme, data visualization style."
+        };
+
+        async function generateImage(id) {
+            const prompt = imagePrompts[id];
+            
+            // Toggle UI states
+            document.getElementById(`${id}-placeholder`).classList.add('hidden');
+            document.getElementById(`${id}-loading`).classList.remove('hidden');
+            document.getElementById(`${id}-image`).classList.add('hidden');
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                    responseModalities: ['TEXT', 'IMAGE']
+                }
+            };
+
+            let retries = 0;
+            const maxRetries = 5;
+
+            async function attempt() {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error('API request failed');
+
+                    const result = await response.json();
+                    const base64 = result.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                    
+                    if (base64) {
+                        const img = document.getElementById(`${id}-image`);
+                        img.src = `data:image/png;base64,${base64}`;
+                        img.classList.remove('hidden');
+                        document.getElementById(`${id}-loading`).classList.add('hidden');
+                        showMessage(`Success: Asset ${id.toUpperCase()} Rendered`, true);
+                    } else {
+                        throw new Error('Empty response');
+                    }
+                } catch (err) {
+                    if (retries < maxRetries) {
+                        retries++;
+                        const delay = Math.pow(2, retries) * 1000;
+                        setTimeout(attempt, delay);
+                    } else {
+                        document.getElementById(`${id}-loading`).classList.add('hidden');
+                        document.getElementById(`${id}-placeholder`).classList.remove('hidden');
+                        showMessage(`Error: Visualization engine timed out.`, false);
+                    }
+                }
+            }
+
+            attempt();
+        }
+
+        function showMessage(text, isSuccess) {
+            const box = document.getElementById('message-box');
+            const boxText = document.getElementById('msg-text');
+            const icon = document.getElementById('msg-icon');
+            
+            boxText.innerText = text;
+            
+            if (isSuccess) {
+                box.classList.add('border-amber-500', 'text-amber-500');
+                box.classList.remove('border-red-500', 'text-red-500');
+            } else {
+                box.classList.add('border-red-500', 'text-red-500');
+                box.classList.remove('border-amber-500', 'text-amber-500');
+            }
+
+            box.classList.remove('translate-y-20', 'opacity-0');
+            box.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                box.classList.add('translate-y-20', 'opacity-0');
+                box.classList.remove('translate-y-0', 'opacity-100');
+            }, 4000);
+        }
+
+        // Interaction initialization
+        window.onload = () => {
+            console.log("Project 7 Infrastructure Dashboard Online");
+        };
+    </script>
+</body>
+</html>
